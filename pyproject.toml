@@ -3,6 +3,8 @@ name = "bookops-callno"
 version = "0.1.0"
 description = "Python library for creation of BPL & NYPL call numbers based on bibliographic and order data."
 authors = ["klinga <klingaroo@gmail.com>"]
+license = "MIT"
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -14,3 +16,25 @@ pytest = "^6.2"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 88
+target-version = ['py37']
+include = '\.pyi?$'
+exclude = '''
+(
+    /(
+        \.eggs
+       | \.git
+       | \.hg
+       | \.mypy_cache
+       | \.tox
+       | \.venv
+       | _build
+       | buck-out
+       | build
+       | dist
+    )/
+    | temp.py
+)
+'''
