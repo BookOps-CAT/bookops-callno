@@ -74,30 +74,6 @@ def get_audience(bib: Record = None) -> Optional[str]:
         return "adult"
 
 
-def get_main_entry_tag(bib: Record = None) -> Optional[str]:
-    """
-    Determines MARC tag of the main entry
-
-    Args:
-        bib:                    pymarc.Record instance
-
-    Returns:
-        tag
-    """
-    if bib is None:
-        return None
-    elif not isinstance(bib, Record):
-        raise CallNoConstructorError(
-            "Invalid 'bib' argument used. Must be pymarc.Record instance."
-        )
-
-    entry_tags = ["100", "110", "111", "245"]
-
-    for tag in entry_tags:
-        if has_tag(bib, tag):
-            return tag
-
-
 def get_field(bib: Record = None, tag: str = None) -> Optional[Field]:
     """
     Returns pymarc.Field instance of the the first given MARC tag in a bib
@@ -120,6 +96,84 @@ def get_field(bib: Record = None, tag: str = None) -> Optional[Field]:
         raise CallNoConstructorError("Invalid 'tag' argument used. Must be string.")
 
     return bib[tag]
+
+
+def get_form_of_item_code(bib: Record = None) -> Optional[str]:
+    """
+    Parses form of item code in the 008 tag if exists
+
+    Args:
+        bib:                    pymarc.Record instance
+
+    Returns:
+        code
+    """
+    if bib is None:
+        return None
+    elif not isinstance(bib, Record):
+        raise CallNoConstructorError(
+            "Invalid 'bib' argument used. Must be pymarc.Record instance."
+        )
+    rec_type = bib.leader[6]
+    try:
+        # print, sound records, computer files
+        if rec_type in ("a", "c", "d", "i", "j", "m", "t"):
+            return bib["008"].data[23]
+        # visual materials
+        elif rec_type == "g":
+            return bib["008"].data[29]
+        else:
+            return None
+    except (AttributeError, IndexError):
+        return None
+
+
+def get_format_bpl(bib: Record = None) -> Optional[str]:
+    """
+    Determines material format based on the leader and tag 008 of the
+    MARC record
+
+    Args:
+        bib:                    pymarc.Record instance
+
+    Returns:
+        bib_format
+    """
+    if bib is None:
+        return None
+    elif not isinstance(bib, Record):
+        raise CallNoConstructorError(
+            "Invalid 'bib' argument used. Must be pymarc.Record instance."
+        )
+
+    rec_type = bib.leader[6]
+    bib_lvl = bib.leader[7]
+
+    t300 = bib["300"].value()
+
+
+def get_main_entry_tag(bib: Record = None) -> Optional[str]:
+    """
+    Determines MARC tag of the main entry
+
+    Args:
+        bib:                    pymarc.Record instance
+
+    Returns:
+        tag
+    """
+    if bib is None:
+        return None
+    elif not isinstance(bib, Record):
+        raise CallNoConstructorError(
+            "Invalid 'bib' argument used. Must be pymarc.Record instance."
+        )
+
+    entry_tags = ["100", "110", "111", "245"]
+
+    for tag in entry_tags:
+        if has_tag(bib, tag):
+            return tag
 
 
 def get_language_code(bib: Record = None) -> Optional[str]:

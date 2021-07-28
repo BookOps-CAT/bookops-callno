@@ -4,10 +4,12 @@ import pytest
 from pymarc import Record, Field
 
 from bookops_callno.parser import (
+    get_audience,
+    get_form_of_item_code,
+    get_format_bpl,
     get_field,
     get_language_code,
     get_main_entry_tag,
-    get_audience,
     has_audience_code,
     has_tag,
     is_short,
@@ -65,6 +67,78 @@ def test_get_audience_short_book(arg, expectation):
     )
     bib.add_field(Field(tag="300", indicators=[], subfields=["a", arg]))
     assert get_audience(bib) == expectation
+
+
+def test_get_form_of_item_code_none_bib():
+    assert get_form_of_item_code() is None
+
+
+def test_get_form_of_item_code_invalid_bib_type_exception():
+    msg = "Invalid 'bib' argument used. Must be pymarc.Record instance."
+    with pytest.raises(CallNoConstructorError) as exc:
+        get_form_of_item_code(bib="foo")
+
+    assert msg in str(exc)
+
+
+def test_get_form_of_item_code_no_leader():
+    bib = Record()
+    assert get_form_of_item_code(bib=bib) is None
+
+
+def test_get_form_of_item_code_no_008():
+    bib = Record()
+    bib.leader = "@" * 6 + "a"
+    assert get_form_of_item_code(bib=bib) is None
+
+
+@pytest.mark.parametrize(
+    "arg,expectation",
+    [
+        ("a", "a"),
+        ("c", "c"),
+        ("d", "d"),
+        ("i", "i"),
+        ("j", "j"),
+        ("m", "m"),
+        ("t", "t"),
+    ],
+)
+def test_get_form_of_item_code_in_23_pos_of_008(arg, expectation):
+    bib = Record()
+    bib.leader = "@" * 6 + arg
+    bib.add_field(Field(tag="008", data="@" * 23 + expectation))
+    assert get_form_of_item_code(bib=bib) == expectation
+
+
+def test_get_form_of_item_code_in_29th_pos_of_008():
+    bib = Record()
+    bib.leader = "@" * 6 + "g"
+    bib.add_field(Field(tag="008", data="@" * 29 + "g"))
+    assert get_form_of_item_code(bib=bib) == "g"
+
+
+@pytest.mark.parametrize("arg", ["e", "f", "k", "o", "p", "r"])
+def test_get_form_of_item_code_unsupported_material_type(arg):
+    """
+    Tests for cartographic materials, two-dimentional nonprojectable graphic,
+    kits, mixed materials and three-dimentional materials
+    """
+    bib = Record()
+    bib.leader = "@" * 6 + arg
+    bib.add_field(Field(tag="008", data="@" * 30))
+    assert get_form_of_item_code(bib=bib) is None
+
+
+def test_get_format_bpl_none_bib():
+    assert get_format_bpl() is None
+
+
+def test_get_format_bpl_invalid_bib_type():
+    msg = "Invalid 'bib' argument used. Must be pymarc.Record instance."
+    with pytest.raises(CallNoConstructorError) as exc:
+        get_format_bpl(bib="foo")
+    assert msg in str(exc)
 
 
 def test_get_language_code_none_bib():
