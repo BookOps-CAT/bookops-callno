@@ -74,6 +74,35 @@ def get_audience(bib: Record = None) -> Optional[str]:
         return "adult"
 
 
+def get_callno_relevant_subjects(bib: Record = None) -> List[Field]:
+    """
+    Parses call number relevant subject MARc fields
+
+    Args:
+        bib:                    pymarc.Record instance
+
+    Returns:
+        subject_fields
+    """
+    if bib is None:
+        return []
+    elif not isinstance(bib, Record):
+        raise CallNoConstructorError(
+            "Invalid 'bib' argument used. Must be pymarc.Record instance."
+        )
+
+    subject_fields = []
+    for field in bib.get_fields("600", "610"):
+        if is_lc_subject(field):
+            subject_fields.append(field)
+
+    for field in bib.get_fields("650"):
+        if is_lc_subject(field):
+            subject_fields.append(field)
+
+    return subject_fields
+
+
 def get_field(bib: Record = None, tag: str = None) -> Optional[Field]:
     """
     Returns pymarc.Field instance of the the first given MARC tag in a bib

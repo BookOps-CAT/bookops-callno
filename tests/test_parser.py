@@ -5,6 +5,7 @@ from pymarc import Record, Field
 
 from bookops_callno.parser import (
     get_audience,
+    get_callno_relevant_subjects,
     get_form_of_item_code,
     get_format_bpl,
     get_field,
@@ -70,6 +71,35 @@ def test_get_audience_short_book(arg, expectation):
     )
     bib.add_field(Field(tag="300", indicators=[], subfields=["a", arg]))
     assert get_audience(bib) == expectation
+
+
+def test_get_callno_relevant_subjects_none_bib():
+    assert get_callno_relevant_subjects() == []
+
+
+def test_get_callno_relevant_subjects_invalid_field_type():
+    msg = "Invalid 'bib' argument used. Must be pymarc.Record instance."
+    with pytest.raises(CallNoConstructorError) as exc:
+        get_callno_relevant_subjects(bib="foo")
+    assert msg in str(exc)
+
+
+def test_get_callno_relevant_subjects():
+    bib = Record()
+    bib.add_field(Field(tag="600", indicators=["1", "4"], subfields=["a", "Foo."]))
+    bib.add_field(Field(tag="600", indicators=["1", "0"], subfields=["a", "Bar."]))
+    bib.add_field(Field(tag="610", indicators=["2", "0"], subfields=["a", "Spam."]))
+    bib.add_field(Field(tag="650", indicators=[" ", "0"], subfields=["a", "Baz."]))
+    bib.add_field(Field(tag="690", indicators=["1", "7"], subfields=["a", "Ham."]))
+    bib.add_field(Field(tag="650", indicators=[" ", "7"], subfields=["a", "Eggs."]))
+
+    res = get_callno_relevant_subjects(bib)
+    for r in res:
+        assert type(r) == Field
+    assert res[0].value() == "Bar."
+    assert res[1].value() == "Spam."
+    assert res[2].value() == "Baz."
+    assert len(res) == 3
 
 
 def test_get_field_none_bib():
