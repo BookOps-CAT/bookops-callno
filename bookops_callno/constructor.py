@@ -23,23 +23,9 @@ class CallNo:
     def __init__(self, bib: Record = None, requested_call_type: str = "auto"):
         """
         Call number constructor. The 'requested_call_type' may specify what type of
-        the call number should be constructed (fiction, biography, etc.).
-        The list below represents only same, shared between BPL & NYPL call number
-        patterns and library specific call types that are possible
-        (see documentation for specific library).
+        the call number should be constructed (fiction, biography, etc.). See BPLCallNo
+        and NYPLCallNo classes for the details.
 
-        Args:
-            bib:                    pymarc.Record object
-            requested_call_type:    type of call number to create; default 'auto';
-                                    shared (BPL & NYPL) type patterns:
-                                        - auto:             best match
-                                        - fic:              fiction
-                                        - bio:              biography
-                                        - ebook:            ebook
-                                        - dewey:            non-fic with Dewey
-                                        - dewey-subject:    Dewey + subject pattern
-                                        - movie:            DVD movie
-                                        - tv:               DVD tv
         """
         if not isinstance(requested_call_type, str):
             raise CallNoConstructorError(
@@ -70,6 +56,7 @@ class CallNo:
         self.language_info = self._get_language_info(bib)
         self.physical_desc_info = self._get_physical_desciption(bib)
         self.record_type_info = self._get_record_type_info(bib)
+        self.subject_info = self._get_subject_info(bib)
 
     def _get_audience_info(self, bib: Record) -> Optional[str]:
         """
@@ -115,8 +102,15 @@ class CallNo:
         """
         Returns MARC leader record type code
         """
-        rec_type = get_record_type(bib)
+        rec_type = get_record_type_code(bib)
         return rec_type
+
+    def _get_subject_info(self, bib: Record) -> Optional[str]:
+        """
+        Returns list of relevant for call number creation 6xx tags
+        """
+        subjects = get_callno_relevant_subjects(bib)
+        return subjects
 
     def as_pymarc_field(self) -> Field:
         """
