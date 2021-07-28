@@ -10,6 +10,8 @@ from bookops_callno.parser import (
     get_field,
     get_language_code,
     get_main_entry_tag,
+    get_physical_description,
+    get_record_type_code,
     has_audience_code,
     has_tag,
     is_short,
@@ -67,6 +69,41 @@ def test_get_audience_short_book(arg, expectation):
     )
     bib.add_field(Field(tag="300", indicators=[], subfields=["a", arg]))
     assert get_audience(bib) == expectation
+
+
+def test_get_field_none_bib():
+    assert get_field(bib=None, tag="100") is None
+
+
+def test_get_field_exception_invalid_bib_arg():
+    msg = "Invalid 'bib' argument used. Must be pymarc.Record instance."
+    with pytest.raises(CallNoConstructorError) as exc:
+        get_field("foo", "100")
+    assert msg in str(exc)
+
+
+def test_get_field_exception_invalid_tag_arg():
+    msg = "Invalid 'tag' argument used. Must be string."
+    with pytest.raises(CallNoConstructorError) as exc:
+        bib = Record()
+        get_field(bib, 100)
+    assert msg in str(exc)
+
+
+def test_get_field_missing_field():
+    bib = Record()
+    assert get_field(bib, "100") is None
+
+
+def test_get_field_success():
+    bib = Record()
+    bib.add_field(Field(tag="100", indicators=[], subfields=["a", "foo"]))
+    bib.add_field(Field(tag="100", indicators=[], subfields=["a", "bar"]))
+    field = get_field(bib, "100")
+    assert type(field) == Field
+    assert field.tag == "100"
+    assert field.indicators == []
+    assert field.subfields == ["a", "foo"]
 
 
 def test_get_form_of_item_code_none_bib():
@@ -130,15 +167,15 @@ def test_get_form_of_item_code_unsupported_material_type(arg):
     assert get_form_of_item_code(bib=bib) is None
 
 
-def test_get_format_bpl_none_bib():
-    assert get_format_bpl() is None
+# def test_get_format_bpl_none_bib():
+#     assert get_format_bpl() is None
 
 
-def test_get_format_bpl_invalid_bib_type():
-    msg = "Invalid 'bib' argument used. Must be pymarc.Record instance."
-    with pytest.raises(CallNoConstructorError) as exc:
-        get_format_bpl(bib="foo")
-    assert msg in str(exc)
+# def test_get_format_bpl_invalid_bib_type():
+#     msg = "Invalid 'bib' argument used. Must be pymarc.Record instance."
+#     with pytest.raises(CallNoConstructorError) as exc:
+#         get_format_bpl(bib="foo")
+#     assert msg in str(exc)
 
 
 def test_get_language_code_none_bib():
@@ -210,39 +247,33 @@ def test_get_main_entry_tag_None():
     assert get_main_entry_tag(bib) is None
 
 
-def test_get_field_none_bib():
-    assert get_field(bib=None, tag="100") is None
+def test_get_physical_description_none_bib():
+    assert get_physical_description() is None
 
 
-def test_get_field_exception_invalid_bib_arg():
-    msg = "Invalid 'bib' argument used. Must be pymarc.Record instance."
-    with pytest.raises(CallNoConstructorError) as exc:
-        get_field("foo", "100")
-    assert msg in str(exc)
-
-
-def test_get_field_exception_invalid_tag_arg():
-    msg = "Invalid 'tag' argument used. Must be string."
-    with pytest.raises(CallNoConstructorError) as exc:
-        bib = Record()
-        get_field(bib, 100)
-    assert msg in str(exc)
-
-
-def test_get_field_missing_field():
+def test_get_physical_desription_no_300_tag():
     bib = Record()
-    assert get_field(bib, "100") is None
+    assert get_physical_description(bib=bib) is None
 
 
-def test_get_field_success():
+def test_get_physical_description_success():
     bib = Record()
-    bib.add_field(Field(tag="100", indicators=[], subfields=["a", "foo"]))
-    bib.add_field(Field(tag="100", indicators=[], subfields=["a", "bar"]))
-    field = get_field(bib, "100")
-    assert type(field) == Field
-    assert field.tag == "100"
-    assert field.indicators == []
-    assert field.subfields == ["a", "foo"]
+    bib.add_field(
+        Field(
+            tag="300", indicators=[], subfields=["a", "foo:", "b", "bar;", "c", "spam"]
+        )
+    )
+    assert get_physical_description(bib=bib) == "foo: bar; spam"
+
+
+def test_get_record_type_code_none_bib():
+    assert get_record_type_code() is None
+
+
+def test_get_record_type_code():
+    bib = Record()
+    bib.leader = "@" * 6 + "a"
+    assert get_record_type_code(bib=bib) == "a"
 
 
 def test_has_audience_code_invalid_leader():
