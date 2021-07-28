@@ -4,7 +4,7 @@
 This module contains methods to parse MARC records in a form of pymarc.Record objects
 """
 
-from typing import Optional
+from typing import List, Optional
 
 from pymarc import Record, Field
 
@@ -250,6 +250,33 @@ def has_tag(bib: Record = None, tag: str = None) -> bool:
         raise CallNoConstructorError("Invalid 'tag' argument used. Must be string.")
 
     return bool(bib[tag])
+
+
+def is_lc_subject(field: Field = None) -> bool:
+    """
+    Determies if subject belongs to LCSH
+
+    Args:
+        field:              pymarc.Field instance
+
+    Returns:
+        boolean
+    """
+
+    if field is None:
+        return False
+    elif not isinstance(field, Field):
+        raise CallNoConstructorError(
+            "Invalid 'field' argument. Must be an instance of 'pymarc.Field'."
+        )
+
+    if field.tag in ("600", "610", "611", "630", "650", "651", "655"):
+        if field.indicator2 == "0":
+            return True
+        else:
+            return False
+    else:
+        return False
 
 
 def is_short(bib: Record = None) -> Optional[bool]:

@@ -14,6 +14,7 @@ from bookops_callno.parser import (
     get_record_type_code,
     has_audience_code,
     has_tag,
+    is_lc_subject,
     is_short,
 )
 from bookops_callno.errors import CallNoConstructorError
@@ -336,6 +337,44 @@ def test_has_tag_true():
     bib = Record()
     bib.add_field(Field(tag="100", indicators=["1", " "], subfields=["a", "Foo"]))
     assert has_tag(bib, "100")
+
+
+def test_is_lc_subject_none_field():
+    assert is_lc_subject() is False
+
+
+def test_is_lc_subject_invalid_field():
+    msg = "Invalid 'field' argument. Must be an instance of 'pymarc.Field'."
+    with pytest.raises(CallNoConstructorError) as exc:
+        is_lc_subject("foo")
+    assert msg in str(exc)
+
+
+@pytest.mark.parametrize(
+    "arg,expectation",
+    [
+        ("600", True),
+        ("610", True),
+        ("611", True),
+        ("630", True),
+        ("650", True),
+        ("651", True),
+        ("655", True),
+        ("648", False),
+        ("690", False),
+    ],
+)
+def test_is_lc_subject_tag_check(arg, expectation):
+    field = Field(tag=arg, indicators=[" ", "0"], subfields=["a", "Foo."])
+    assert is_lc_subject(field) == expectation
+
+
+@pytest.mark.parametrize(
+    "arg,expectation", [("7", False), ("1", False), ("4", False), ("0", True)]
+)
+def test_is_lc_subject_indicator2_check(arg, expectation):
+    field = Field(tag="600", indicators=[" ", arg], subfields=["a", "Foo."])
+    assert is_lc_subject(field) == expectation
 
 
 def test_is_short_none_bib():
