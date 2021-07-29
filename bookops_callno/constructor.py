@@ -9,6 +9,7 @@ from pymarc import Record, Field
 
 from bookops_callno.parser import (
     get_audience,
+    get_callno_relevant_subjects,
     get_field,
     get_form_of_item_code,
     get_language_code,
@@ -39,7 +40,7 @@ class CallNo:
         self.language_info = None
         self.physical_desc_info = None
         self.record_type_info = None
-        self.subject_info = None
+        self.subject_info = []
 
         self.callno_field = None
         self.requested_call_type = requested_call_type
@@ -54,7 +55,7 @@ class CallNo:
         self.cutter_info = self._get_main_entry_info(bib)
         self.form_of_item_info = self._get_form_of_item_info(bib)
         self.language_info = self._get_language_info(bib)
-        self.physical_desc_info = self._get_physical_desciption(bib)
+        self.physical_desc_info = self._get_physical_description_info(bib)
         self.record_type_info = self._get_record_type_info(bib)
         self.subject_info = self._get_subject_info(bib)
 
@@ -122,7 +123,7 @@ class CallNo:
         """
         String representation of the constructed call number
         """
-        if self.callno is not None:
+        if self.callno_field is not None:
             return self.callno_field.value()
         else:
             return ""
