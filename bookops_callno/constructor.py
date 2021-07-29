@@ -129,11 +129,17 @@ class CallNo:
         return self.callno_field
 
 
-class BPLCallNo(CallNo):
-    def __init__(self, bib: Record, requested_call_type: str, strict_mode: bool = True):
+class BplCallNo(CallNo):
+    def __init__(
+        self,
+        bib: Record = None,
+        requested_call_type: str = "auto",
+        strict_mode: bool = True,
+    ):
         super().__init__(bib, requested_call_type)
 
-        self.callno_tag = "099"
+        self.tag = "099"
+        self.inds = [" ", " "]
         self.strict_mode = strict_mode
 
         self._create()
@@ -143,13 +149,21 @@ class BPLCallNo(CallNo):
         Creates call number
         """
         if self.requested_call_type == "eaudio":
-            self.callno_field = Field(tag=self.callno_tag, subfields=["a", "eAUDIO"])
+            self.callno_field = Field(
+                tag=self.tag,
+                indicators=self.inds,
+                subfields=["a", "eAUDIO"],
+            )
         elif self.requested_call_type == "ebook":
-            self.callno_field = Field(tag=self.callno_tag, subfields=["a", "eBOOK"])
+            self.callno_field = Field(
+                tag=self.tag, indicators=self.inds, subfields=["a", "eBOOK"]
+            )
         elif self.requested_call_type == "evideo":
-            self.callno_field = Field(tag=self.callno_tag, subfields=["a", "eVIDEO"])
+            self.callno_field = Field(
+                tag=self.tag, indicators=self.inds, subfields=["a", "eVIDEO"]
+            )
 
 
-class NYPLCallNo(CallNo):
+class NyplCallNo(CallNo):
     def __init__(self, bib: Record, requested_call_type: str):
         super().__init__(bib, requested_call_type)

@@ -4,7 +4,7 @@ from pymarc import Record, Field
 import pytest
 
 
-from bookops_callno.constructor import CallNo
+from bookops_callno.constructor import CallNo, BplCallNo
 from bookops_callno.errors import CallNoConstructorError
 
 
@@ -134,3 +134,27 @@ def test_CallNo_repr(arg, expectation):
     cn = CallNo(bib=None)
     cn.callno_field = arg
     assert str(cn) == expectation
+
+
+def test_BplCallNo_initiation():
+    bcn = BplCallNo()
+    assert bcn.audience_info is None
+    assert bcn.content_info is None
+    assert bcn.cutter_info is None
+    assert bcn.language_info is None
+    assert bcn.physical_desc_info is None
+    assert bcn.record_type_info is None
+    assert bcn.subject_info == []
+    assert bcn.callno_field is None
+    assert bcn.requested_call_type == "auto"
+    assert bcn.tag == "099"
+    assert bcn.inds == [" ", " "]
+    assert bcn.strict_mode is True
+
+
+def test_BplCallNo_ebook():
+    bcn = BplCallNo(requested_call_type="ebook")
+    cf = bcn.as_pymarc_field()
+    assert cf.tag == "099"
+    assert cf.indicators == [" ", " "]
+    assert cf.subfields == ["a", "eBOOK"]
