@@ -23,7 +23,7 @@ from bookops_callno.errors import CallNoConstructorError
 class CallNo:
     def __init__(self, bib: Record = None, requested_call_type: str = "auto"):
         """
-        Call number constructor. The 'requested_call_type' may specify what type of
+        Genaral call number constructor. The 'requested_call_type' may specify what type of
         the call number should be constructed (fiction, biography, etc.). See BPLCallNo
         and NYPLCallNo classes for the details.
 
@@ -46,6 +46,15 @@ class CallNo:
         self.requested_call_type = requested_call_type
 
         self._prep(bib)
+
+    def __repr__(self) -> str:
+        """
+        String representation of the constructed call number
+        """
+        if self.callno_field is not None:
+            return self.callno_field.value()
+        else:
+            return ""
 
     def _prep(self, bib: Record) -> None:
         """
@@ -113,25 +122,32 @@ class CallNo:
         subjects = get_callno_relevant_subjects(bib)
         return subjects
 
-    def as_pymarc_field(self) -> Field:
+    def as_pymarc_field(self) -> Optional[Field]:
         """
         Returns constructed call number as `pymarc.Field` object
         """
         return self.callno_field
 
-    def __repr__(self) -> str:
-        """
-        String representation of the constructed call number
-        """
-        if self.callno_field is not None:
-            return self.callno_field.value()
-        else:
-            return ""
-
 
 class BPLCallNo(CallNo):
-    def __init__(self, bib: Record, requested_call_type: str):
+    def __init__(self, bib: Record, requested_call_type: str, strict_mode: bool = True):
         super().__init__(bib, requested_call_type)
+
+        self.callno_tag = "099"
+        self.strict_mode = strict_mode
+
+        self._create()
+
+    def _create(self):
+        """
+        Creates call number
+        """
+        if self.requested_call_type == "eaudio":
+            self.callno_field = Field(tag=self.callno_tag, subfields=["a", "eAUDIO"])
+        elif self.requested_call_type == "ebook":
+            self.callno_field = Field(tag=self.callno_tag, subfields=["a", "eBOOK"])
+        elif self.requested_call_type == "evideo":
+            self.callno_field = Field(tag=self.callno_tag, subfields=["a", "eVIDEO"])
 
 
 class NYPLCallNo(CallNo):
