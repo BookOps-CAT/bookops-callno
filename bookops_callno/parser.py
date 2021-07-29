@@ -184,6 +184,29 @@ def get_format_bpl(bib: Record = None) -> Optional[str]:
 #     t300 = bib["300"].value()
 
 
+def get_language_code(bib: Record = None) -> Optional[str]:
+    """
+    Determines world lanugage code based on pos 35-37 of the 008 tag
+
+    Args:
+        bib:                pymarc.Record instance
+
+    Returns:
+        3-letter language code
+    """
+    if bib is None:
+        return None
+
+    try:
+        code = bib["008"].data[35:38].lower()
+        if code:
+            return code
+        else:
+            return None
+    except (AttributeError, IndexError):
+        return None
+
+
 def get_main_entry_tag(bib: Record = None) -> Optional[str]:
     """
     Determines MARC tag of the main entry
@@ -206,29 +229,6 @@ def get_main_entry_tag(bib: Record = None) -> Optional[str]:
     for tag in entry_tags:
         if has_tag(bib, tag):
             return tag
-
-
-def get_language_code(bib: Record = None) -> Optional[str]:
-    """
-    Determines world lanugage code based on pos 35-37 of the 008 tag
-
-    Args:
-        bib:                pymarc.Record instance
-
-    Returns:
-        3-letter language code
-    """
-    if bib is None:
-        return None
-
-    try:
-        code = bib["008"].data[35:38].lower()
-        if code:
-            return code
-        else:
-            return None
-    except (AttributeError, IndexError):
-        return None
 
 
 def get_physical_description(bib: Record = None) -> Optional[str]:
