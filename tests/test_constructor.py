@@ -149,7 +149,14 @@ def test_BplCallNo_initiation():
     assert bcn.requested_call_type == "auto"
     assert bcn.tag == "099"
     assert bcn.inds == [" ", " "]
-    assert bcn.strict_mode is True
+
+
+def test_BplCallNo_eaudio():
+    bcn = BplCallNo(requested_call_type="eaudio")
+    cf = bcn.as_pymarc_field()
+    assert cf.tag == "099"
+    assert cf.indicators == [" ", " "]
+    assert cf.subfields == ["a", "eAUDIO"]
 
 
 def test_BplCallNo_ebook():
@@ -158,3 +165,11 @@ def test_BplCallNo_ebook():
     assert cf.tag == "099"
     assert cf.indicators == [" ", " "]
     assert cf.subfields == ["a", "eBOOK"]
+
+
+def test_BplCallNo_evideo():
+    bcn = BplCallNo(requested_call_type="evideo")
+    cf = bcn.as_pymarc_field()
+    assert cf.tag == "099"
+    assert cf.indicators == [" ", " "]
+    assert cf.subfields == ["a", "eVIDEO"]

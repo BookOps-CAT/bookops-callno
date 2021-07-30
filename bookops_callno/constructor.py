@@ -91,10 +91,7 @@ class CallNo:
 
     def _get_main_entry_info(self, bib: Record) -> Tuple[str, Field]:
         """
-        Determines 'main entry' of the bib.
-
-        Returns namedTuple object with first element to be the entry and
-        second elemet MARC tag it came from
+        Determines a 'main entry' field of the bib.
         """
         tag = get_main_entry_tag(bib)
         field = get_field(bib, tag)
@@ -133,15 +130,38 @@ class BplCallNo(CallNo):
     def __init__(
         self,
         bib: Record = None,
+        order_audn: str = None,
+        order_lang: str = None,
+        order_note: str = None,
+        order_shelf: str = None,
         requested_call_type: str = "auto",
-        strict_mode: bool = True,
     ):
+        """
+        Args:
+
+            bib:                    pymarc.Record instance
+            order_audn:             order audience
+            order_lang:             order language
+            order_note:             vendor note/po per line
+            order_shelf:            order shelf code
+            requested_call_type:    call pattern to be created;
+                                    options:
+                                        - auto
+                                        - eaudio
+                                        - ebook
+                                        - evideo
+                                        - fic
+        """
         super().__init__(bib, requested_call_type)
 
         self.tag = "099"
         self.inds = [" ", " "]
-        self.strict_mode = strict_mode
+        self.order_audn = order_audn
+        self.order_lang = order_lang
+        self.order_note = order_note
+        self.order_shelf = order_shelf
 
+        self._get_material_format()
         self._create()
 
     def _create(self):
@@ -149,19 +169,52 @@ class BplCallNo(CallNo):
         Creates call number
         """
         if self.requested_call_type == "eaudio":
-            self.callno_field = Field(
-                tag=self.tag,
-                indicators=self.inds,
-                subfields=["a", "eAUDIO"],
-            )
+            self.callno_field = self._create_eaudio_callno()
         elif self.requested_call_type == "ebook":
-            self.callno_field = Field(
-                tag=self.tag, indicators=self.inds, subfields=["a", "eBOOK"]
-            )
+            self.callno_field = self._create_ebook_callno()
         elif self.requested_call_type == "evideo":
-            self.callno_field = Field(
-                tag=self.tag, indicators=self.inds, subfields=["a", "eVIDEO"]
-            )
+            self.callno_field = self._create_evideo_callno()
+        elif self.requested_call_type == "fic":
+            self.callno_field = self._create_fic_callno()
+
+    def _create_eaudio_callno(self):
+        """
+        Creates call number for electronic audiobook (eAUDIO)
+        """
+        return Field(
+            tag=self.tag,
+            indicators=self.inds,
+            subfields=["a", "eAUDIO"],
+        )
+
+    def _create_ebook_callno(self):
+        """
+        Creates call number field for ebook (eBOOK)
+        """
+        return Field(tag=self.tag, indicators=self.inds, subfields=["a", "eBOOK"])
+
+    def _create_evideo_callno(self):
+        """
+        Creates call number field for evideo (eVideo)
+        """
+        return Field(tag=self.tag, indicators=self.inds, subfields=["a", "eVIDEO"])
+
+    def _create_fic_callno(self):
+        """
+        Creates call number field for fiction, patterns:
+            FIC ADAMS
+            FIC T
+            J FIC ADAMS
+            SPA FIC ADAMS
+            SPA J FIC ADAMS
+        """
+        cutter = self._
+
+    def _get_material_format(self):
+        """
+        Determines material format
+        """
+        pass
 
 
 class NyplCallNo(CallNo):
