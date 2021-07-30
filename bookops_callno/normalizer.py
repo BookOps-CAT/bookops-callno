@@ -3,6 +3,30 @@
 from typing import Optional
 
 from pymarc import Field
+from unidecode import unidecode, UnidecodeError
+
+
+from bookops_callno.errors import CallNoConstructorError
+
+
+def normalize_value(value: str) -> str:
+    """
+    Removes diacritics from string and changes to uppercase
+    """
+    if not value:
+        return ""
+    elif not isinstance(value, str):
+        raise CallNoConstructorError(
+            "Invalid 'value' type used in argument. Must be a string."
+        )
+
+    try:
+        value = unidecode(value, errors="strict")
+        return value.upper()
+    except UnidecodeError as exc:
+        raise CallNoConstructorError(
+            f"Unsupported character encountered. Error: '{exc}'."
+        )
 
 
 def corporate_name_first_word(field: Field = None) -> Optional[str]:
