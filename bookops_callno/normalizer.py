@@ -124,8 +124,9 @@ def corporate_name_initial(field: Field = None) -> Optional[str]:
     if field.tag != "110":
         return None
 
-    first_chr = field["a"][0]
-    initial = normalize_value(first_chr)
+    name = field["a"]
+    name = normalize_value(name)
+    initial = name[0]
     return initial
 
 
@@ -139,12 +140,26 @@ def personal_name_initial(field: Field = None) -> Optional[str]:
     Returns
         initial
     """
-    pass
+    if field is None:
+        return None
+    elif not isinstance(field, Field):
+        raise CallNoConstructorError(
+            "Invalid 'field' argument type. Must be pymarc.Field instance."
+        )
+
+    if field.tag != "100":
+        return None
+
+    name = field["a"].strip()
+    name = normalize_value(name)
+    initial = name[0]
+    return initial
 
 
 def personal_name_surname(field: Field = None) -> Optional[str]:
     """
-    Returns an uppercase surname of personal author
+    Returns an uppercase surname of personal author. Includes any numeration from
+    the subield $b of 100 or 600 MARC tag.
 
     Args:
         field:                  pymarc.Field instance
@@ -152,6 +167,16 @@ def personal_name_surname(field: Field = None) -> Optional[str]:
     Returns:
         name
     """
+    if field is None:
+        return None
+    elif not isinstance(field, Field):
+        raise CallNoConstructorError(
+            "Invalid 'field' argument type. Must be pymarc.Field instance."
+        )
+
+    if field.tag not in ("100", "600"):
+        return None
+
     pass
 
 
@@ -166,6 +191,31 @@ def subject_corporate_name(field: Field = None) -> Optional[str]:
     Returns:
         name
     """
+    pass
+
+
+def subject_family_name(field: Field = None) -> Optional[str]:
+    """
+    Returns an uppercase family name based on the 600 MARC tag
+
+    Args:
+        field:                  pymarc.Field instance
+
+    Returns:
+        name
+    """
+    if field is None:
+        return None
+    elif not isinstance(field, Field):
+        raise CallNoConstructorError(
+            "Invalid 'field' argument type. Must be pymarc.Field instance."
+        )
+
+    if field.tag != "600":
+        return None
+    elif field.indicator2 != "3":
+        return None
+
     pass
 
 
