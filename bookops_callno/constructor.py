@@ -3,10 +3,17 @@
 """
 This module provides the main interface for the package
 """
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 from pymarc import Record, Field
 
+
+from bookops_callno.errors import CallNoConstructorError
+from bookops_callno.normalizer import (
+    corporate_name_initial,
+    personal_name_surname,
+    title_initial,
+)
 from bookops_callno.parser import (
     get_audience,
     get_callno_relevant_subjects,
@@ -17,7 +24,6 @@ from bookops_callno.parser import (
     get_physical_description,
     get_record_type_code,
 )
-from bookops_callno.errors import CallNoConstructorError
 
 
 class CallNo:
@@ -161,7 +167,7 @@ class BplCallNo(CallNo):
         self.order_note = order_note
         self.order_shelf = order_shelf
 
-        self._get_material_format()
+        self.mat_format = self._get_material_format()
         self._create()
 
     def _create(self):
@@ -199,7 +205,7 @@ class BplCallNo(CallNo):
         """
         return Field(tag=self.tag, indicators=self.inds, subfields=["a", "eVIDEO"])
 
-    def _create_fic_callno(self):
+    def _create_fic_callno(self) -> Optional[str]:
         """
         Creates call number field for fiction, patterns:
             FIC ADAMS
@@ -208,7 +214,55 @@ class BplCallNo(CallNo):
             SPA FIC ADAMS
             SPA J FIC ADAMS
         """
-        cutter = self._
+        # determine material format
+        if self.mat_format == "audio":
+            form = "AUDIO"
+        else:
+            form = None
+
+        # determine language
+        if self.language_info is not None and self.language_info != "eng":
+            lang = self.language_info.upper()
+        else:
+            lang = None
+
+        # determine audience
+        if self.audience_info == "juv":
+            audn = "J"
+        else:
+            audn = None
+
+        # determine cutter
+        main_entry_tag = self.cutter_info.tag
+        if main_entry_tag == "100":
+            cutter = personal_name_surname(field=self.cutter_info)
+        elif main_entry_tag == "110":
+            cutter = corporate_name_initial(field=self.cutter_info)
+        elif main_entry_tag == "245":
+            cutter = title_initial(field=self.cutter_info)
+        else:
+            cutter = None
+
+        if not cutter:
+            return None
+        else:
+            elements = [e for e in [form, lang, audn, "FIC", cutter] if e]
+            subfields = self._construct_subfields(elements)
+            return Field(tag=self.tag, indicators=self.inds, subfields=subfields)
+
+    def _construct_subfields(self, elements: List[str]) -> List:
+        """
+        Constructs properly formatted list of subfields by inserting subfield $a
+        before each element
+
+        Args:
+            elements:               list of call number elements in order they
+                                    should appear on the bib
+        """
+        subfields = []
+        for e in elements:
+            subfields.extend(["a", e])
+        return subfields
 
     def _get_material_format(self):
         """

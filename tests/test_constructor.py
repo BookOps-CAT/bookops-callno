@@ -151,7 +151,7 @@ def test_BplCallNo_initiation():
     assert bcn.inds == [" ", " "]
 
 
-def test_BplCallNo_eaudio():
+def test_BplCallNo_create_eaudio_callno():
     bcn = BplCallNo(requested_call_type="eaudio")
     cf = bcn.as_pymarc_field()
     assert cf.tag == "099"
@@ -159,7 +159,7 @@ def test_BplCallNo_eaudio():
     assert cf.subfields == ["a", "eAUDIO"]
 
 
-def test_BplCallNo_ebook():
+def test_BplCallNo_create_ebook_callno():
     bcn = BplCallNo(requested_call_type="ebook")
     cf = bcn.as_pymarc_field()
     assert cf.tag == "099"
@@ -167,9 +167,93 @@ def test_BplCallNo_ebook():
     assert cf.subfields == ["a", "eBOOK"]
 
 
-def test_BplCallNo_evideo():
+def test_BplCallNo_crate_evideo_callno():
     bcn = BplCallNo(requested_call_type="evideo")
     cf = bcn.as_pymarc_field()
     assert cf.tag == "099"
     assert cf.indicators == [" ", " "]
     assert cf.subfields == ["a", "eVIDEO"]
+
+
+def test_BplCallNo_construct_subfields():
+    bcn = BplCallNo()
+    assert bcn._construct_subfields(["foo", "bar", "baz"]) == [
+        "a",
+        "foo",
+        "a",
+        "bar",
+        "a",
+        "baz",
+    ]
+
+
+@pytest.mark.parametrize(
+    "form,lang,audn,main_entry_tag,main_entry_ind, main_entry_subs,expectation",
+    [
+        (
+            "print",
+            "eng",
+            "adult",
+            "100",
+            ["1", " "],
+            ["a", "Adams, John,", "e", "author."],
+            "=099  \\\\$aFIC$aADAMS",
+        ),
+        (
+            "print",
+            "chi",
+            "adult",
+            "100",
+            ["1", " "],
+            ["a", "Adams, John,", "e", "author."],
+            "=099  \\\\$aCHI$aFIC$aADAMS",
+        ),
+        (
+            "print",
+            "eng",
+            "juv",
+            "100",
+            ["0", ""],
+            ["a", "Aesop."],
+            "=099  \\\\$aJ$aFIC$aAESOP",
+        ),
+        (
+            "audio",
+            "eng",
+            "juv",
+            "100",
+            ["1", " "],
+            ["a", "Adams, John,", "e", "author."],
+            "=099  \\\\$aAUDIO$aJ$aFIC$aADAMS",
+        ),
+        (
+            "print",
+            "chi",
+            "young adult",
+            "110",
+            ["2", "0"],
+            ["a", "Foo."],
+            "=099  \\\\$aCHI$aFIC$aF",
+        ),
+        (
+            "print",
+            "eng",
+            "adult",
+            "245",
+            ["0", "4"],
+            ["a", "The Foo."],
+            "=099  \\\\$aFIC$aF",
+        ),
+    ],
+)
+def test_BplCallNo_create_fic_callno(
+    form, lang, audn, main_entry_tag, main_entry_ind, main_entry_subs, expectation
+):
+    bcn = BplCallNo()
+    bcn.mat_format = form
+    bcn.language_info = lang
+    bcn.audience_info = audn
+    bcn.cutter_info = Field(
+        tag=main_entry_tag, indicators=main_entry_ind, subfields=main_entry_subs
+    )
+    assert str(bcn._create_fic_callno()) == expectation
