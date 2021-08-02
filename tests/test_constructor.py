@@ -244,6 +244,15 @@ def test_BplCallNo_construct_subfields():
             ["a", "The Foo."],
             "=099  \\\\$aFIC$aF",
         ),
+        (
+            "print",
+            "eng",
+            "adult",
+            "100",
+            ["3", " "],
+            ["a", "Adams (Family :", "d", "1872-1963 :", "c", "South Africa)"],
+            "None",
+        ),
     ],
 )
 def test_BplCallNo_create_fic_callno(

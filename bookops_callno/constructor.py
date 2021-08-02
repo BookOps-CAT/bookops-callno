@@ -213,6 +213,8 @@ class BplCallNo(CallNo):
             J FIC ADAMS
             SPA FIC ADAMS
             SPA J FIC ADAMS
+            AUDIO FIC ADAMS
+            AUDIO SPA J FIC ADAMS
         """
         # determine material format
         if self.mat_format == "audio":
