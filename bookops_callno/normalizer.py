@@ -41,6 +41,8 @@ def normalize_value(value: str) -> str:
         )
 
     try:
+        value = value.replace("\u02b9", "")  # Russian: modifier letter prime
+        value = value.replace("\u02bb", "")  # Arabic modifier letter turned comma
         value = unidecode(value, errors="strict")
         value = remove_trailing_punctuation(value).upper()
         return value
@@ -95,7 +97,7 @@ def corporate_name_full(field: Field = None) -> Optional[str]:
             "Invalid 'field' argument type. Must be pymarc.Field instance."
         )
 
-    if field.tag != "110":
+    if field.tag not in ("110", "610"):
         return None
 
     phrases = field["a"].strip().split("(")
@@ -176,8 +178,28 @@ def personal_name_surname(field: Field = None) -> Optional[str]:
 
     if field.tag not in ("100", "600"):
         return None
+    elif field.indicator1 not in ("0", "1"):
+        return None
 
-    pass
+    sub_a = field["a"].strip()
+
+    # include subfield $b if present
+    try:
+        sub_b = field["b"].strip()
+        name = f"{sub_a} {sub_b}"
+    except AttributeError:
+        name = sub_a
+
+    name = normalize_value(name)
+
+    # stop at comma to select surname
+    try:
+        stop = name.index(",")
+        name = name[:stop]
+    except ValueError:
+        pass
+
+    return name
 
 
 def subject_corporate_name(field: Field = None) -> Optional[str]:
@@ -191,7 +213,18 @@ def subject_corporate_name(field: Field = None) -> Optional[str]:
     Returns:
         name
     """
-    pass
+    if field is None:
+        return None
+    elif not isinstance(field, Field):
+        raise CallNoConstructorError(
+            "Invalid 'field' argument type. Must be pymarc.Field instance."
+        )
+
+    if field.tag != "610":
+        return None
+
+    name = corporate_name_full(field)
+    return name
 
 
 def subject_family_name(field: Field = None) -> Optional[str]:
@@ -213,10 +246,17 @@ def subject_family_name(field: Field = None) -> Optional[str]:
 
     if field.tag != "600":
         return None
-    elif field.indicator2 != "3":
+    elif field.indicator1 != "3":
         return None
 
-    pass
+    try:
+        stop = field["a"].index("family")
+        name = field["a"][:stop]
+    except ValueError:
+        return None
+
+    name = normalize_value(name)
+    return name
 
 
 def subject_personal_name(field: Field = None) -> Optional[str]:
@@ -232,7 +272,18 @@ def subject_personal_name(field: Field = None) -> Optional[str]:
     Returns:
         name
     """
-    pass
+    if field is None:
+        return None
+    elif not isinstance(field, Field):
+        raise CallNoConstructorError(
+            "Invalid 'field' argument type. Must be pymarc.Field instance."
+        )
+
+    if field.tag != "600":
+        return None
+
+    name = personal_name_surname(field)
+    return name
 
 
 def subject_topic(field: Field = None) -> Optional[str]:
@@ -275,4 +326,22 @@ def title_initial(field: Field = None) -> Optional[str]:
     Returns:
         initial
     """
-    pass
+    if field is None:
+        return None
+    elif not isinstance(field, Field):
+        raise CallNoConstructorError(
+            "Invalid 'field' argument type. Must be pymarc.Field instance."
+        )
+
+    if field.tag != "245":
+        return None
+
+    try:
+        ind2 = int(field.indicator2)
+    except ValueError:
+        return None
+
+    title = field["a"][ind2:]
+    title = normalize_value(title)
+    initial = title[0]
+    return initial
