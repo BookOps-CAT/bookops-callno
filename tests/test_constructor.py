@@ -13,7 +13,7 @@ def test_CallNo_none_bib():
     assert cn.audience_info is None
     assert cn.content_info is None
     assert cn.cutter_info is None
-    assert cn.language_info is None
+    assert cn.language_code is None
     assert cn.physical_desc_info is None
     assert cn.record_type_info is None
     assert cn.subject_info == []
@@ -49,12 +49,22 @@ def test_CallNo_get_form_of_item_info():
     assert cn._get_form_of_item_info(bib) == "a"
 
 
-def test_CallNo_get_language_info():
+def test_CallNo_get_language_code():
     cn = CallNo()
     bib = Record()
     bib.leader = "@" * 6 + "am"
     bib.add_field(Field(tag="008", data="@" * 35 + "spa"))
-    assert cn._get_language_info(bib) == "spa"
+    assert cn._get_language_code(bib) == "SPA"
+
+
+def test_CallNo_language_code():
+    bib = Record()
+    bib.leader = "@" * 6 + "am"
+    bib.add_field(Field(tag="008", data="@" * 35 + "spa"))
+    bib.add_field(Field(tag="100", subfields=["a", "foo"]))
+    bib.add_field(Field(tag="245", subfields=["a", "bar"]))
+    cn = CallNo(bib=bib)
+    assert cn.language_code == "SPA"
 
 
 def test_CallNo_main_entry_100_tag():
@@ -141,7 +151,7 @@ def test_BplCallNo_initiation():
     assert bcn.audience_info is None
     assert bcn.content_info is None
     assert bcn.cutter_info is None
-    assert bcn.language_info is None
+    assert bcn.language_code is None
     assert bcn.physical_desc_info is None
     assert bcn.record_type_info is None
     assert bcn.subject_info == []
@@ -192,7 +202,7 @@ def test_BplCallNo_construct_subfields():
     [
         (
             "print",
-            "eng",
+            None,
             "adult",
             "100",
             ["1", " "],
@@ -201,7 +211,7 @@ def test_BplCallNo_construct_subfields():
         ),
         (
             "print",
-            "chi",
+            "CHI",
             "adult",
             "100",
             ["1", " "],
@@ -210,7 +220,7 @@ def test_BplCallNo_construct_subfields():
         ),
         (
             "print",
-            "eng",
+            None,
             "juv",
             "100",
             ["0", ""],
@@ -219,7 +229,7 @@ def test_BplCallNo_construct_subfields():
         ),
         (
             "audio",
-            "eng",
+            None,
             "juv",
             "100",
             ["1", " "],
@@ -228,7 +238,7 @@ def test_BplCallNo_construct_subfields():
         ),
         (
             "print",
-            "chi",
+            "CHI",
             "young adult",
             "110",
             ["2", "0"],
@@ -237,7 +247,7 @@ def test_BplCallNo_construct_subfields():
         ),
         (
             "print",
-            "eng",
+            None,
             "adult",
             "245",
             ["0", "4"],
@@ -246,7 +256,7 @@ def test_BplCallNo_construct_subfields():
         ),
         (
             "print",
-            "eng",
+            None,
             "adult",
             "100",
             ["3", " "],
@@ -260,7 +270,7 @@ def test_BplCallNo_create_fic_callno(
 ):
     bcn = BplCallNo()
     bcn.mat_format = form
-    bcn.language_info = lang
+    bcn.language_code = lang
     bcn.audience_info = audn
     bcn.cutter_info = Field(
         tag=main_entry_tag, indicators=main_entry_ind, subfields=main_entry_subs

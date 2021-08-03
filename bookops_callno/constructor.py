@@ -47,7 +47,7 @@ class CallNo:
         self.content_info = None
         self.cutter_info = None
         self.form_of_item_info = None
-        self.language_info = None
+        self.language_code = None
         self.physical_desc_info = None
         self.record_type_info = None
         self.subject_info = []
@@ -73,7 +73,7 @@ class CallNo:
         self.audience_info = self._get_audience_info(bib)
         self.cutter_info = self._get_main_entry_info(bib)
         self.form_of_item_info = self._get_form_of_item_info(bib)
-        self.language_info = self._get_language_info(bib)
+        self.language_code = self._get_language_code(bib)
         self.physical_desc_info = self._get_physical_description_info(bib)
         self.record_type_info = self._get_record_type_info(bib)
         self.subject_info = self._get_subject_info(bib)
@@ -125,7 +125,7 @@ class CallNo:
         form_of_item = get_form_of_item_code(bib)
         return form_of_item
 
-    def _get_language_info(self, bib: Record) -> Optional[str]:
+    def _get_language_code(self, bib: Record) -> Optional[str]:
         """
         Determines language code of the material
         """
@@ -220,7 +220,7 @@ class BplCallNo(CallNo):
         elif self.requested_call_type == "fic":
             self.callno_field = self._create_fic_callno()
 
-    def _create_eaudio_callno(self):
+    def _create_eaudio_callno(self) -> Optional[Field]:
         """
         Creates call number for electronic audiobook (eAUDIO)
         """
@@ -230,19 +230,19 @@ class BplCallNo(CallNo):
             subfields=["a", "eAUDIO"],
         )
 
-    def _create_ebook_callno(self):
+    def _create_ebook_callno(self) -> Optional[Field]:
         """
         Creates call number field for ebook (eBOOK)
         """
         return Field(tag=self.tag, indicators=self.inds, subfields=["a", "eBOOK"])
 
-    def _create_evideo_callno(self):
+    def _create_evideo_callno(self) -> Optional[Field]:
         """
         Creates call number field for evideo (eVideo)
         """
         return Field(tag=self.tag, indicators=self.inds, subfields=["a", "eVIDEO"])
 
-    def _create_fic_callno(self) -> Optional[str]:
+    def _create_fic_callno(self) -> Optional[Field]:
         """
         Creates call number field for fiction, patterns:
             FIC ADAMS
@@ -258,12 +258,6 @@ class BplCallNo(CallNo):
             form = "AUDIO"
         else:
             form = None
-
-        # determine language
-        if self.language_info is not None and self.language_info != "eng":
-            lang = self.language_info.upper()
-        else:
-            lang = None
 
         # determine audience
         if self.audience_info == "juv":
@@ -285,9 +279,19 @@ class BplCallNo(CallNo):
         if not cutter:
             return None
         else:
-            elements = [e for e in [form, lang, audn, "FIC", cutter] if e]
+            elements = [e for e in [form, self.language_code, audn, "FIC", cutter] if e]
             subfields = self._construct_subfields(elements)
             return Field(tag=self.tag, indicators=self.inds, subfields=subfields)
+
+    def _create_pic_callno(self) -> Optional[Field]:
+        """
+        Creates call number field for picture books and early readers.
+        Patterns:
+            J-E ADAMS
+            J-E A
+            CHI J-E ADAMS
+        """
+        pass
 
     def _construct_subfields(self, elements: List[str]) -> List:
         """
@@ -303,7 +307,7 @@ class BplCallNo(CallNo):
             subfields.extend(["a", e])
         return subfields
 
-    def _get_material_format(self):
+    def _get_material_format(self) -> str:
         """
         Determines material format
         """
