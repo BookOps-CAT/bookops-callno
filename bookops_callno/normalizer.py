@@ -43,6 +43,7 @@ def normalize_value(value: str) -> str:
     try:
         value = value.replace("\u02b9", "")  # Russian: modifier letter prime
         value = value.replace("\u02bb", "")  # Arabic modifier letter turned comma
+        value = value.replace("'", "")
         value = unidecode(value, errors="strict")
         value = remove_trailing_punctuation(value).upper()
         return value

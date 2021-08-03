@@ -190,6 +190,7 @@ def test_personal_name_surname_invalid_tag():
             "LOUIS XIV",
         ),
         ("100", ["a", "Adams."], "ADAMS"),
+        ("100", ["a", "O'Brian, Tim, $e author."], "OBRIAN"),
         (
             "100",
             [
