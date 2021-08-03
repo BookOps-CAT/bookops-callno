@@ -276,3 +276,41 @@ def test_BplCallNo_create_fic_callno(
         tag=main_entry_tag, indicators=main_entry_ind, subfields=main_entry_subs
     )
     assert str(bcn._create_fic_callno()) == expectation
+
+
+@pytest.mark.parametrize(
+    "lang,main_entry_tag,main_entry_ind,main_entry_subs,expectation",
+    [
+        (
+            None,
+            "100",
+            ["1", " "],
+            ["a", "Adams, John,", "e", "author."],
+            "=099  \\\\$aJ-E$aADAMS",
+        ),
+        (None, "110", ["2", " "], ["a", "Foo Company."], "=099  \\\\$aJ-E$aFOO"),
+        (
+            None,
+            "245",
+            ["0 ", "4"],
+            ["a", "The foo /", "c", "Spam."],
+            "=099  \\\\$aJ-E$aF",
+        ),
+        (
+            "CHI",
+            "100",
+            ["1", " "],
+            ["a", "Foo, Spam,", "e", "author."],
+            "=099  \\\\$aCHI$aJ-E$aFOO",
+        ),
+    ],
+)
+def test_BplCallNo_create_pic_callno(
+    lang, main_entry_tag, main_entry_ind, main_entry_subs, expectation
+):
+    bcn = BplCallNo()
+    bcn.language_code = lang
+    bcn.cutter_info = Field(
+        tag=main_entry_tag, indicators=main_entry_ind, subfields=main_entry_subs
+    )
+    assert str(bcn._create_pic_callno()) == expectation

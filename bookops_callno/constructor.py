@@ -10,6 +10,7 @@ from pymarc import Record, Field
 
 from bookops_callno.errors import CallNoConstructorError
 from bookops_callno.normalizer import (
+    corporate_name_first_word,
     corporate_name_initial,
     personal_name_surname,
     title_initial,
@@ -291,7 +292,23 @@ class BplCallNo(CallNo):
             J-E A
             CHI J-E ADAMS
         """
-        pass
+        main_entry_tag = self.cutter_info.tag
+        if main_entry_tag == "100":
+            cutter = personal_name_surname(field=self.cutter_info)
+            print(cutter)
+        elif main_entry_tag == "110":
+            cutter = corporate_name_first_word(field=self.cutter_info)
+        elif main_entry_tag == "245":
+            cutter = title_initial(field=self.cutter_info)
+        else:
+            cutter = None
+
+        if not cutter:
+            return None
+        else:
+            elements = [e for e in [self.language_code, "J-E", cutter] if e]
+            subfields = self._construct_subfields(elements)
+            return Field(tag=self.tag, indicators=self.inds, subfields=subfields)
 
     def _construct_subfields(self, elements: List[str]) -> List:
         """
