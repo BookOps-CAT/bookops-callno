@@ -12,34 +12,6 @@ from pymarc import Record, Field
 from bookops_callno.errors import CallNoConstructorError
 
 
-def has_audience_code(leader: str = None) -> bool:
-    """
-    Determines if MARC record has audience code in position 22 in
-    the leader
-
-    Args:
-        leader:                 MARC leader field
-
-    Returns:
-        boolean
-    """
-    if leader is None:
-        return False
-    elif not isinstance(leader, str):
-        raise CallNoConstructorError(
-            "Invalid 'leader' type used in argument. Must be a string."
-        )
-
-    try:
-        if leader[6] in ("a", "c", "d", "g", "i", "j", "k", "m", "t") and leader[7] in (
-            "a",
-            "m",
-        ):
-            return True
-    except IndexError:
-        return False
-
-
 def get_audience(bib: Record = None) -> Optional[str]:
     """
     Determines audience based on MARC 008 tag.
@@ -262,6 +234,34 @@ def get_record_type_code(bib: Record = None) -> Optional[str]:
     return rec_type_code
 
 
+def has_audience_code(leader: str = None) -> bool:
+    """
+    Determines if MARC record has audience code in position 22 in
+    the leader
+
+    Args:
+        leader:                 MARC leader field
+
+    Returns:
+        boolean
+    """
+    if leader is None:
+        return False
+    elif not isinstance(leader, str):
+        raise CallNoConstructorError(
+            "Invalid 'leader' type used in argument. Must be a string."
+        )
+
+    try:
+        if leader[6] in ("a", "c", "d", "g", "i", "j", "k", "m", "t") and leader[7] in (
+            "a",
+            "m",
+        ):
+            return True
+    except IndexError:
+        return False
+
+
 def has_tag(bib: Record = None, tag: str = None) -> bool:
     """
     Checks if tag exists in record
@@ -279,6 +279,76 @@ def has_tag(bib: Record = None, tag: str = None) -> bool:
         raise CallNoConstructorError("Invalid 'tag' argument used. Must be string.")
 
     return bool(bib[tag])
+
+
+def is_biography(bib: Record = None) -> bool:
+    """
+    Determines if material is autobiography or biography
+    """
+    if bib is None:
+        return False
+
+    rec_type = get_record_type_code(bib)
+    if rec_type in (
+        "a",
+        "t",
+    ):  # print material
+        try:
+            code = bib["008"].data[34]
+        except AttributeError:
+            return False
+
+        if code in ("a", "b"):
+            return True
+        else:
+            return False
+    elif rec_type == "i":  # nonmusical sound recording
+        code = bib["008"].data[30]
+        if code in ("a", "b"):
+            return True
+        else:
+            return False
+    else:
+        return False
+
+
+def is_dewey(bib: Record = None) -> bool:
+    """
+    Determines if material can be classified using Dewey
+
+    Args:
+        bib:                pymarc.Record instance
+
+    Returns:
+        boolean
+    """
+    pass
+
+
+def is_dewey_plus_subject(bib: Record = None) -> bool:
+    """
+    Determines if material can be classified using Dewey + subject pattern
+
+    Args:
+        bib:                pymarc.Record instance
+
+    Returns:
+        boolean
+    """
+    pass
+
+
+def is_fiction(bib: Record = None) -> bool:
+    """
+    Determines if material is fiction
+
+    Args:
+        bib:                pymarc.Record instance
+
+    Returns:
+        boolean
+    """
+    pass
 
 
 def is_lc_subject(field: Field = None) -> bool:

@@ -15,6 +15,7 @@ from bookops_callno.parser import (
     get_record_type_code,
     has_audience_code,
     has_tag,
+    is_biography,
     is_lc_subject,
     is_short,
 )
@@ -351,7 +352,7 @@ def test_has_tag_exception_no_pymarc_bib():
     assert not has_tag(bib=None, tag="100")
 
 
-def tes_has_tag_exception_invalid_tag():
+def test_has_tag_exception_invalid_tag():
     msg = "Invalid 'tag' argument used. Must be string."
     with pytest.raises(CallNoConstructorError) as exc:
         has_tag("100", 100)
@@ -367,6 +368,46 @@ def test_has_tag_true():
     bib = Record()
     bib.add_field(Field(tag="100", indicators=["1", " "], subfields=["a", "Foo"]))
     assert has_tag(bib, "100")
+
+
+def test_is_biography_none_bib():
+    assert not is_biography(bib=None)
+
+
+def test_is_biography_missing_008():
+    bib = Record()
+    bib.leader = "@" * 6 + "a"
+    is_biography(bib=bib)
+
+
+@pytest.mark.parametrize(
+    "arg1,arg2,expectation",
+    [
+        ("a", "a", True),
+        ("a", "b", True),
+        ("t", "a", True),
+        ("t", "b", True),
+        ("a", "d", False),
+        ("t", "d", False),
+        ("d", "a", False),
+        ("i", "a", False),
+    ],
+)
+def test_is_biography_print_material(arg1, arg2, expectation):
+    bib = Record()
+    bib.leader = "@" * 6 + arg1
+    bib.add_field(Field(tag="008", data="@" * 34 + arg2))
+    assert is_biography(bib=bib) == expectation
+
+
+@pytest.mark.parametrize(
+    "arg,expectation", [("a", True), ("b", True), ("e", False), ("h", False)]
+)
+def test_is_biography_audio_material(arg, expectation):
+    bib = Record()
+    bib.leader = "@" * 6 + "i"
+    bib.add_field(Field(tag="008", data="@" * 30 + arg))
+    assert is_biography(bib=bib) == expectation
 
 
 def test_is_lc_subject_none_field():
