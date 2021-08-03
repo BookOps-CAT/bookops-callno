@@ -23,15 +23,19 @@ from bookops_callno.parser import (
     get_main_entry_tag,
     get_physical_description,
     get_record_type_code,
+    is_biography,
+    is_dewey,
+    is_dewey_plus_subject,
+    is_fiction,
 )
 
 
 class CallNo:
     def __init__(self, bib: Record = None, requested_call_type: str = "auto"):
         """
-        Genaral call number constructor. The 'requested_call_type' may specify what type of
-        the call number should be constructed (fiction, biography, etc.). See BPLCallNo
-        and NYPLCallNo classes for the details.
+        Genaral call number constructor. The 'requested_call_type' may specify what
+        type of the call number should be constructed (fiction, biography, etc.).
+        See BPLCallNo and NYPLCallNo classes for the details.
 
         """
         if not isinstance(requested_call_type, str):
@@ -73,6 +77,7 @@ class CallNo:
         self.physical_desc_info = self._get_physical_description_info(bib)
         self.record_type_info = self._get_record_type_info(bib)
         self.subject_info = self._get_subject_info(bib)
+        self.content_info = self._get_content_info(bib)
 
     def _get_audience_info(self, bib: Record) -> Optional[str]:
         """
@@ -80,6 +85,38 @@ class CallNo:
         """
         audn = get_audience(bib)
         return audn
+
+    def _get_content_info(self, bib: Record) -> str:
+        """
+        Determines broad material content
+
+        Returns:
+            content:            options:
+                                    - pic (picture book)
+                                    - fic (fiction)
+                                    - dew (dewey)
+                                    - bio (biography)
+                                    - des (dewey + subject)
+                                    - und (undetermined)
+        """
+        # print material
+        if self.record_type_info in ("a", "t"):
+            # order matters!
+            if self.audience_info == "early juv":
+                self.content_info = "pic"
+            elif is_fiction(bib):
+                self.content_info = "fic"
+            elif is_dewey_plus_subject(bib):
+                self.content_info = "des"
+            elif is_biography(bib):
+                self.content_info = "bio"
+            elif is_dewey(bib):
+                self.content_info = "dew"
+            else:
+                self.content_info = "und"
+        # visual material
+        elif self.record_type_info == "g":
+            pass
 
     def _get_form_of_item_info(self, bib: Record) -> Optional[str]:
         """
