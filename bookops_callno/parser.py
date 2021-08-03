@@ -170,8 +170,8 @@ def get_language_code(bib: Record = None) -> Optional[str]:
         return None
 
     try:
-        code = bib["008"].data[35:38].lower()
-        if code:
+        code = bib["008"].data[35:38].upper()
+        if code not in (None, "", "UND"):
             return code
         else:
             return None

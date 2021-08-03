@@ -221,7 +221,12 @@ def test_get_language_code_no_008_tag():
 
 @pytest.mark.parametrize(
     "arg,expectation",
-    [("@" * 35 + "rus", "rus"), ("@" * 35 + "ENG", "eng"), ("@", None)],
+    [
+        ("@" * 35 + "rus", "RUS"),
+        ("@" * 35 + "ENG", "ENG"),
+        ("@", None),
+        ("@" * 35 + "und", None),
+    ],
 )
 def test_get_languge_code(arg, expectation):
     bib = Record()
