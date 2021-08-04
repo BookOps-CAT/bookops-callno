@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from typing import Optional
+from typing import List, Optional
+from pymarc import Field
 
 from bookops_callno.parser import is_libretto
 
 
 def callno_format_prefix(
-    record_type_code: str = None, form_of_item: str = None
+    record_type_code: str = None, form_of_item: str = None, subjects: List[Field] = []
 ) -> Optional[str]:
     """
     Args:
@@ -16,12 +17,13 @@ def callno_format_prefix(
     Returns:
         format_prefix
     """
+    # language materials
     if record_type_code in ("a", "t"):
         if form_of_item in ("o", "s"):
             return "eBOOK"
         elif form_of_item in ("a", "b"):
             return "NM"
-        elif is_libretto():
+        elif is_libretto(subjects):
             return "LIB"
         else:
             return None
@@ -46,3 +48,6 @@ def callno_format_prefix(
             return "eVIDEO"
         else:
             return "DVD"
+
+    else:
+        return None
