@@ -13,6 +13,7 @@ from bookops_callno.normalizer import (
 )
 from bookops_callno.rules_bpl import callno_format_prefix
 from bookops_callno.rules_shared import (
+    biographee,
     callno_cutter_fic,
     callno_cutter_initial,
     callno_cutter_pic,
@@ -189,31 +190,22 @@ class BplCallNo(CallNo):
             audn = None
 
         # determine biographee segment
-        biographee = None
-        for field in self.subject_info:
-            if field.tag == "600":
-                biographee = subject_personal_name(filed)
-                break  # select first encountered field
-        if biographee is None:
-            return None
-
-        # determine cutter
+        name = biographee(self.subject_info)
         cutter = callno_cutter_initial(self.cutter_info)
-        if not cutter:
+
+        if not all([name, cutter]):
             return None
         else:
             elements = [
-                e
-                for e in [
-                    self.mat_format,
-                    self.language_code,
-                    audn,
-                    "B",
-                    biographee,
-                    cutter,
-                ]
-                if e
+                self.mat_format,
+                self.language_code,
+                audn,
+                "B",
+                name,
+                cutter,
             ]
+            print(elements)
+            elements = self._cleanup_callno_elements(elements)
             subfields = self._construct_subfields(elements)
             return Field(tag=self.tag, indicators=self.inds, subfields=subfields)
 

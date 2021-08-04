@@ -208,10 +208,75 @@ def test_BplCallNo_create_pic_callno(
     assert str(bcn._create_pic_callno()) == expectation
 
 
-# @pytest.mark.parametrize(
-#     "lang,main_entry_tag,main_entry_ind,main_entry_subs,subj,expectation"
-# )
-# def test_BplCallNo_create_bio_callno(
-#     lang, main_entry_tag, main_entry_ind, main_entry_subs, subj
-# ):
-#     pass
+@pytest.mark.parametrize(
+    "form,lang,audn,main_entry_tag,main_entry_ind,main_entry_subs,expectation",
+    [
+        (
+            None,
+            None,
+            "adult",
+            "100",
+            ["1", " "],
+            ["a", "Adams, John."],
+            "=099  \\\\$aB$aBROWN$aA",
+        ),
+        (
+            None,
+            "RUS",
+            "juv",
+            "110",
+            ["2", "0"],
+            ["a", "Foo Company."],
+            "=099  \\\\$aRUS$aJ$aB$aBROWN$aF",
+        ),
+        (
+            "AUDIO",
+            None,
+            "adult",
+            "245",
+            ["0", "0"],
+            ["a", "Foo."],
+            "=099  \\\\$aAUDIO$aB$aBROWN$aF",
+        ),
+    ],
+)
+def test_BplCallNo_create_bio_callno(
+    form, lang, audn, main_entry_tag, main_entry_ind, main_entry_subs, expectation
+):
+    bcn = BplCallNo()
+    bcn.mat_format = form
+    bcn.language_code = lang
+    bcn.audience_info = audn
+    field = Field(
+        tag=main_entry_tag, indicators=main_entry_ind, subfields=main_entry_subs
+    )
+    bcn.cutter_info = field
+    subjects = [
+        Field(tag="600", indicators=["1", "0"], subfields=["a", "Brown, Joyce."])
+    ]
+    bcn.subject_info = subjects
+    callno = bcn._create_bio_callno()
+    assert type(callno) == Field
+    assert str(bcn._create_bio_callno()) == expectation
+
+
+def test_BplCallNo_create_bio_callno_failed_no_subject():
+    bcn = BplCallNo()
+    bcn.cutter_info = Field(
+        tag="100", indicators=["1", " "], subfields=["a", "Adams, John."]
+    )
+    bcn.subject_info = [
+        Field(tag="650", indicators=[" ", "0"], subfields=["a", "foo."])
+    ]
+    assert bcn._create_bio_callno() is None
+
+
+def test_BplCallNo_create_bio_callno_failed_no_cutter():
+    bcn = BplCallNo()
+    bcn.cutter_info = Field(
+        tag="246", indicators=["3", " "], subfields=["a", "Adams, John."]
+    )
+    bcn.subject_info = [
+        Field(tag="600", indicators=["1", "0"], subfields=["a", "Brown, John."])
+    ]
+    assert bcn._create_bio_callno() is None
