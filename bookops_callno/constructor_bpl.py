@@ -12,6 +12,11 @@ from bookops_callno.normalizer import (
     title_initial,
 )
 from bookops_callno.rules_bpl import callno_format_prefix
+from bookops_callno.rules_shared import (
+    callno_cutter_fic,
+    callno_cutter_initial,
+    callno_cutter_pic,
+)
 
 
 class BplCallNo(CallNo):
@@ -52,6 +57,12 @@ class BplCallNo(CallNo):
         self.mat_format = callno_format_prefix()
         self._create()
 
+    def _cleanup_callno_elements(self, elements: List) -> List:
+        """
+        Removes from a list elements that have value None
+        """
+        return [e for e in elements if e]
+
     def _create(self):
         """
         Creates call number
@@ -64,6 +75,10 @@ class BplCallNo(CallNo):
             self.callno_field = self._create_evideo_callno()
         elif self.requested_call_type == "fic":
             self.callno_field = self._create_fic_callno()
+        elif self.requested_call_type == "pic":
+            self.callno_field = self._create_pic_callno()
+        elif self.requested_call_type == "bio":
+            self.callno_field = self._create_bio_callno()
 
     def _create_eaudio_callno(self) -> Optional[Field]:
         """
@@ -111,20 +126,13 @@ class BplCallNo(CallNo):
             audn = None
 
         # determine cutter
-        main_entry_tag = self.cutter_info.tag
-        if main_entry_tag == "100":
-            cutter = personal_name_surname(field=self.cutter_info)
-        elif main_entry_tag == "110":
-            cutter = corporate_name_initial(field=self.cutter_info)
-        elif main_entry_tag == "245":
-            cutter = title_initial(field=self.cutter_info)
-        else:
-            cutter = None
+        cutter = callno_cutter_fic(self.cutter_info)
 
         if not cutter:
             return None
         else:
-            elements = [e for e in [form, self.language_code, audn, "FIC", cutter] if e]
+            elements = [form, self.language_code, audn, "FIC", cutter]
+            elements = self._cleanup_callno_elements(elements)
             subfields = self._construct_subfields(elements)
             return Field(tag=self.tag, indicators=self.inds, subfields=subfields)
 
@@ -136,17 +144,7 @@ class BplCallNo(CallNo):
             J-E A
             CHI J-E ADAMS
         """
-        main_entry_tag = self.cutter_info.tag
-        if main_entry_tag == "100":
-            cutter = personal_name_surname(field=self.cutter_info)
-            print(cutter)
-        elif main_entry_tag == "110":
-            cutter = corporate_name_first_word(field=self.cutter_info)
-        elif main_entry_tag == "245":
-            cutter = title_initial(field=self.cutter_info)
-        else:
-            cutter = None
-
+        cutter = callno_cutter_pic(self.cutter_info)
         if not cutter:
             return None
         else:
@@ -184,33 +182,38 @@ class BplCallNo(CallNo):
             DVD CHI B ADAMS G
             BOOK & CD B ADAMS G
         """
-        # determine material format
-        if self.mat_format == "audio":
-            form = "AUDIO"
-        else:
-            form = None
-
         # determine audience
         if self.audience_info == "juv":
             audn = "J"
         else:
             audn = None
 
-        # determine cutter
-        main_entry_tag = self.cutter_info.tag
-        if main_entry_tag == "100":
-            cutter = personal_name_surname(field=self.cutter_info)
-        elif main_entry_tag == "110":
-            cutter = corporate_name_initial(field=self.cutter_info)
-        elif main_entry_tag == "245":
-            cutter = title_initial(field=self.cutter_info)
-        else:
-            cutter = None
+        # determine biographee segment
+        biographee = None
+        for field in self.subject_info:
+            if field.tag == "600":
+                biographee = subject_personal_name(filed)
+                break  # select first encountered field
+        if biographee is None:
+            return None
 
+        # determine cutter
+        cutter = callno_cutter_initial(self.cutter_info)
         if not cutter:
             return None
         else:
-            elements = [e for e in [form, self.language_code, audn, "FIC", cutter] if e]
+            elements = [
+                e
+                for e in [
+                    self.mat_format,
+                    self.language_code,
+                    audn,
+                    "B",
+                    biographee,
+                    cutter,
+                ]
+                if e
+            ]
             subfields = self._construct_subfields(elements)
             return Field(tag=self.tag, indicators=self.inds, subfields=subfields)
 

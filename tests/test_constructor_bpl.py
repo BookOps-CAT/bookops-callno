@@ -21,6 +21,21 @@ def test_BplCallNo_initiation():
     assert bcn.inds == [" ", " "]
 
 
+@pytest.mark.parametrize(
+    "arg,expectation",
+    [
+        ([], []),
+        ([None, "foo", None], ["foo"]),
+        ([None, None], []),
+        (["foo", None, "bar"], ["foo", "bar"]),
+        (["", "foo"], ["foo"]),
+    ],
+)
+def test_BplCallNo_cleanup_callno_elements(arg, expectation):
+    bcn = BplCallNo()
+    assert bcn._cleanup_callno_elements(arg) == expectation
+
+
 def test_BplCallNo_create_eaudio_callno():
     bcn = BplCallNo(requested_call_type="eaudio")
     cf = bcn.as_pymarc_field()
@@ -191,3 +206,12 @@ def test_BplCallNo_create_pic_callno(
         tag=main_entry_tag, indicators=main_entry_ind, subfields=main_entry_subs
     )
     assert str(bcn._create_pic_callno()) == expectation
+
+
+# @pytest.mark.parametrize(
+#     "lang,main_entry_tag,main_entry_ind,main_entry_subs,subj,expectation"
+# )
+# def test_BplCallNo_create_bio_callno(
+#     lang, main_entry_tag, main_entry_ind, main_entry_subs, subj
+# ):
+#     pass
