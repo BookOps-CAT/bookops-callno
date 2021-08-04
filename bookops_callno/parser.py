@@ -129,33 +129,6 @@ def get_form_of_item_code(bib: Record = None) -> Optional[str]:
         return None
 
 
-def get_format_bpl(bib: Record = None) -> Optional[str]:
-    """
-    Determines material format based on the leader and tag 008 of the
-    MARC record
-
-    Args:
-        bib:                    pymarc.Record instance
-
-    Returns:
-        bib_format
-    """
-    pass
-
-
-#     if bib is None:
-#         return None
-#     # elif not isinstance(bib, Record):
-#     #     raise CallNoConstructorError(
-#     #         "Invalid 'bib' argument used. Must be pymarc.Record instance."
-#     #     )
-
-#     rec_type = bib.leader[6]
-#     bib_lvl = bib.leader[7]
-#     item_form = get_form_of_item_code(bib)
-#     t300 = bib["300"].value()
-
-
 def get_language_code(bib: Record = None) -> Optional[str]:
     """
     Determines world lanugage code based on pos 35-37 of the 008 tag
@@ -376,6 +349,16 @@ def is_lc_subject(field: Field = None) -> bool:
             return False
     else:
         return False
+
+
+def is_libretto(subjects: List[Field]) -> bool:
+    """
+    Checks is material is a libretto
+    """
+    for s in subjects:
+        if "Librettos" in s.value():
+            return True
+    return False
 
 
 def is_short(bib: Record = None) -> Optional[bool]:

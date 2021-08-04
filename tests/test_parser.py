@@ -7,7 +7,6 @@ from bookops_callno.parser import (
     get_audience,
     get_callno_relevant_subjects,
     get_form_of_item_code,
-    get_format_bpl,
     get_field,
     get_language_code,
     get_main_entry_tag,
