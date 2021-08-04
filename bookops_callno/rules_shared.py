@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from typing import Optional
+from typing import List, Optional
 
 from pymarc import Field
 
@@ -12,6 +12,22 @@ from bookops_callno.normalizer import (
     personal_name_initial,
     title_initial,
 )
+
+
+def biographee(subjects: List[Field]) -> Optional[str]:
+    """
+    Constructs biographee component of the call number.
+
+    Args:
+        subjects:                       list of pymarc.Field instances
+
+    Returns:
+        biographee
+    """
+    for field in subjects:
+        if field.tag == "600":
+            biographee = personal_name_surname(field)
+            return biographee
 
 
 def callno_cutter_fic(field: Field = None) -> Optional[str]:

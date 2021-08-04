@@ -4,10 +4,25 @@ import pytest
 from pymarc import Field
 
 from bookops_callno.rules_shared import (
+    biographee,
     callno_cutter_fic,
     callno_cutter_initial,
     callno_cutter_pic,
 )
+
+
+def test_biographee_first_subject_selected():
+    subjects = [
+        Field(tag="650", indicators=[" ", "0"], subfields=["a", "foo"]),
+        Field(tag="600", indicators=["1", "0"], subfields=["a", "Adams, John."]),
+        Field(tag="600", indicators=["1", "0"], subfields=["a", "Brown, Joyce."]),
+    ]
+    assert biographee(subjects) == "ADAMS"
+
+
+def test_biographee_none_present():
+    subjects = [Field(tag="650", indicators=[" ", "0"], subfields=["a", "foo"])]
+    assert biographee(subjects) is None
 
 
 @pytest.mark.parametrize(
